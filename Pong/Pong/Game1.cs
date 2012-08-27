@@ -16,12 +16,14 @@ namespace Pong
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
+        private const Single BaseBallSpeed = 8f;
+        private const Single BasePlayerSpeed = BaseBallSpeed/4;
         GraphicsDeviceManager _graphics;
         SpriteBatch _spriteBatch;
         private GameObject _topWall;
         private GameObject _bottomWall;
-        private GameObject _playerOne;
-        private GameObject _playerTwo;
+        private Racket _playerOne;
+        private Racket _playerTwo;
         private GameObject _ball;
         private Boolean _roundIsRunning;
         private KeyboardState _keyboardState;
@@ -62,11 +64,11 @@ namespace Pong
             Vector2 position;
 
             position = new Vector2(0, (Window.ClientBounds.Height - paddleTexture.Height)/2);
-            _playerOne = new GameObject(paddleTexture, position);
+            _playerOne = new Racket(paddleTexture, position);
 
             position = new Vector2((Window.ClientBounds.Width - paddleTexture.Width),
                                    (Window.ClientBounds.Height - paddleTexture.Height)/2);
-            _playerTwo  = new GameObject(paddleTexture, position);
+            _playerTwo  = new Racket(paddleTexture, position);
 
             var ballTexture = Content.Load<Texture2D>("ball");
             position = new Vector2(_playerOne.BoundingBox.Right + 1, (Window.ClientBounds.Height - ballTexture.Height)/2);
@@ -90,8 +92,16 @@ namespace Pong
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            if(_roundIsRunning)
-                _ball.Position += _ball.Velocity * 50 * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if(_roundIsRunning)// extract/move into ball class
+            {
+                var updateSpan = 50*(float) gameTime.ElapsedGameTime.TotalSeconds;
+                _ball.Position += _ball.Velocity * updateSpan;
+            }else
+            {
+                _ball.YCenter = _playerOne.YCenter;
+            }
+            _playerOne.Update(gameTime);
+            _playerTwo.Update(gameTime);
             
             _keyboardState = Keyboard.GetState();
 
@@ -99,19 +109,15 @@ namespace Pong
             if (_keyboardState.IsKeyDown(Keys.Space))
                 _roundIsRunning = true;
             if (_keyboardState.IsKeyDown(Keys.W)) {
-                if (!_roundIsRunning)
-                    _ball.Position.Y -= 10f;
-                _playerOne.Position.Y -= 10f;
+                    _playerOne.MoveUp();
             }
             if (_keyboardState.IsKeyDown(Keys.S)) {
-                if (!_roundIsRunning)
-                    _ball.Position.Y += 10f;
-                _playerOne.Position.Y += 10f;
+                    _playerOne.MoveDown();
             }
             if (_keyboardState.IsKeyDown(Keys.Up))
-                _playerTwo.Position.Y -= 10f;
+                _playerTwo.MoveUp();
             if (_keyboardState.IsKeyDown(Keys.Down))
-                _playerTwo.Position.Y += 10f;
+                _playerTwo.MoveDown();
 
             CheckPaddleWallCollision();
             CheckBallCollision();
@@ -133,11 +139,13 @@ namespace Pong
             }
             if (_ball.BoundingBox.Intersects(_playerOne.BoundingBox))
             {
+                _ball.Velocity += _playerOne.Velocity;
                 _ball.Velocity.X *= -1;
                 _ball.Position += _ball.Velocity;
             }
             if (_ball.BoundingBox.Intersects(_playerTwo.BoundingBox))
             {
+                _ball.Velocity += _playerTwo.Velocity;
                 _ball.Velocity.X *= -1;
                 _ball.Position += _ball.Velocity;
             }
@@ -145,6 +153,7 @@ namespace Pong
             if ((_ball.Position.X < -_ball.BoundingBox.Width) || (_ball.Position.X > Window.ClientBounds.Width))
             {
                 _roundIsRunning = false;
+                // TODO: set point for other player
                 SetInStartPostion();
             }
         }
@@ -152,10 +161,12 @@ namespace Pong
         private void SetInStartPostion()
         {
             _playerOne.Position.Y = (Window.ClientBounds.Height - _playerOne.BoundingBox.Height)/2;
+            _playerOne.ResetMovingState();
             _playerTwo.Position.Y = (Window.ClientBounds.Height - _playerTwo.BoundingBox.Height) / 2;
+            _playerTwo.ResetMovingState();
             _ball.Position.X = _playerOne.BoundingBox.Right + 1;
             _ball.Position.Y = (Window.ClientBounds.Height - _ball.BoundingBox.Height)/2;
-            _ball.Velocity = new Vector2(8f, -8f);
+            _ball.Velocity = new Vector2(BaseBallSpeed, -BaseBallSpeed);
         }
 
         private void CheckPaddleWallCollision()

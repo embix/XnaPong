@@ -6,9 +6,9 @@ namespace Pong
 {
     public class GameObject
     {
-        private readonly Texture2D _texture;
-        public Vector2 Position;
-        public Vector2 Velocity;
+        protected readonly Texture2D Texture;// todo expose height to get middle (Y for ball)
+        public Vector2 Position;//todo: { get; set; }
+        public Vector2 Velocity;//todo: { get; set; }
 
         public Rectangle BoundingBox
         {
@@ -17,27 +17,33 @@ namespace Pong
                 return new Rectangle(
                     (Int32)Position.X,
                     (Int32)Position.Y,
-                    _texture.Width,
-                    _texture.Height);
+                    Texture.Width,
+                    Texture.Height);
             }
+        }
+
+        public Int32 YCenter
+        {
+            get { return (int)(Position.Y + Texture.Height / 2); }
+            set { Position.Y = value-Texture.Height/2; }
         }
 
         public GameObject(Texture2D texture, Vector2 position)
         {
-            _texture = texture;
+            Texture = texture;
             Position = position;
         }
 
         public GameObject(Texture2D texture, Vector2 position, Vector2 velocity)
         {
-            _texture = texture;
+            Texture = texture;
             Position = position;
             Velocity = velocity;
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(_texture, Position, Color.White);
+            spriteBatch.Draw(Texture, Position, Color.White);
         }
     }
 }
