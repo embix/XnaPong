@@ -95,6 +95,7 @@ namespace Pong
             
             _keyboardState = Keyboard.GetState();
 
+            if(_keyboardState.IsKeyDown(Keys.Escape)) base.Exit();
             if (_keyboardState.IsKeyDown(Keys.Space))
                 _roundIsRunning = true;
             if (_keyboardState.IsKeyDown(Keys.W)) {
